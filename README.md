@@ -20,14 +20,14 @@ Below is a map showing the river locations analyzed along eight major rivers in 
 
 ## Key Details
 
-- **Locations**: 33 river sites (Alaska and Western Canada)  
+- **Locations**: 33 river sites (Alaska and Western Canada) 
 - **Breakup Dates**: Sourced from Alaska-Pacific River Forecast Center database  
 - **Meteorological Data**: Daily inputs from Daymet  
 - **Watershed Attributes**: Static features from the pan-Arctic Catchment Database  
 - **Model**: Long Short-Term Memory (LSTM)  
 - **Holdout Evaluation**:  
   - 23 locations used for training  
-  - 10 locations reserved for testing generalizability  
+  - 10 locations reserved for testing generalizability over space (Holdouts)
 
 ---
 
@@ -35,14 +35,13 @@ Below is a map showing the river locations analyzed along eight major rivers in 
 
 | Metric | Training Locations | Holdout Locations |
 |:------:|:------------------:|:-----------------:|
-| Mean Absolute Error (MAE) | 5.40 days | - |
-| Standard Deviation of Error | 4.03 days | - |
-| Mean Absolute Percentage Error (MAPE) | 4.37% | < 8% for 8 out of 10 holdouts |
+| Mean Absolute Error (MAE) | 5.40 days | 8.46 days |
+| Standard Deviation of Error | 4.03 days | 6.64 days |
+| Mean Absolute Percentage Error (MAPE) | 4.37% | 6.92% |
 
-- **Temporal Range**: 1980–2023  
-- **Holdout Result**: 8 of the 10 locations had a MAPE of less than 8% over the full time series.
+**Temporal Range**: 1980–2023  
 
-Here are boxplots showing prediction performance across the test locations:
+Below are boxplots showing prediction performance across the test locations:
 
 ![Boxplots of Test Site Results](./.images/boxplots_23_sites_paper.png)
 
@@ -68,25 +67,26 @@ Below is a visualization of the temporally adjusted Shapley values:
 
 ## Unique Methodological Notes
 
-To improve model initialization and convergence, we introduced a **bias term** into the kernel initialization using the following equations:
+To improve model initialization and convergence, we introduced a bias into the kernel initialization using the following equations:
+$P(Breakup) = \frac{TP}{TN + TP} = \frac{1}{1 + e^{\mathrm{-Bias_0}}}$
+$Bias_0 = -\ln\left(\frac{1}{\mathrm{P(Breakup)} - 1}\right) = \ln\left(\mathrm{\frac{TP}{TN}}\right)$
 
-
-This bias correction made the LSTM particularly well-suited for the specific forecasting needs of river ice breakup timing.
+This bias correction positioned the LSTM to effectively forecast infrequent events in nature - in this instance, the breakup timing of Arctic river ice.
 
 ---
 
 ## Authors and Affiliations
 
-- **Russ Limber** — The University of Tennessee, Knoxville, TN, USA; Oak Ridge National Laboratory, Oak Ridge, TN, USA
-- **Forrest M. Hoffman** — Oak Ridge National Laboratory, Oak Ridge, TN, USA
-- **Jon Schwenk** — Los Alamos National Laboratory, Los Alamos, NM, USA
-- **Jitendra Kumar** — Oak Ridge National Laboratory, Oak Ridge, TN, USA
+- [Russ Limber](https://www.ornl.gov/staff-profile/russell-limber) — The University of Tennessee, Knoxville, TN, USA; Oak Ridge National Laboratory, Oak Ridge, TN, USA
+- [Forrest M. Hoffman](https://www.ornl.gov/staff-profile/forrest-hoffman) — Oak Ridge National Laboratory, Oak Ridge, TN, USA
+- [Jon Schwenk](https://laro.lanl.gov/esploro/profile/jonathan_schwenk/output/all?institution=01LANL_INST) — Los Alamos National Laboratory, Los Alamos, NM, USA
+- [Jitendra Kumar](https://www.ornl.gov/staff-profile/jitendra-kumar) — Oak Ridge National Laboratory, Oak Ridge, TN, USA
 
 ---
 
 ## Publication
 
-This work is currently under review in **Water Resources Research**.
+This work is currently under review in [Water Resources Research](https://www.authorea.com/users/809484/articles/1283660-long-short-term-memory-model-to-forecast-river-ice-breakup-throughout-alaska-usa).
 
 ---
 
@@ -122,7 +122,7 @@ If you use this work or the provided code, please cite:
 	keywords={Surveys;Wildfires;Normalized difference vegetation index;Geology;Weather forecasting;Predictive models;Transformers;Fuels;Indexes;MODIS;transformer;residual connection;wildfires;time series;remote sensing},
 	doi={10.1109/BigData62323.2024.10825778}}
 ``` -->
-
+(permanent citation coming soon)
 ```
 Russ Limber, Forrest M Hoffman, Jon Schwenk, et al. Long Short-Term Memory Model to Forecast River Ice Breakup Throughout Alaska USA. Authorea. April 07, 2025. DOI: 10.22541/au.174405211.12366502/v1
 ```
