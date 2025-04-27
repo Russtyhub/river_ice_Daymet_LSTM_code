@@ -1,5 +1,7 @@
 #!/usr/bin/python3
 # Calculates Shapley scores for the River Ice LSTM Model:
+
+# conda activate DL
 # mpiexec -n 15 python3 Calculating_Shapley_Values.py
 
 import os
@@ -19,17 +21,16 @@ comm = MPI.COMM_WORLD
 size = comm.Get_size()
 rank = comm.Get_rank()
 
-sys.path.append('../../Functions')
-from STANDARD_FUNCTIONS import read_pickle
-from DATA_ANALYSIS_FUNCTIONS import normalize_df
+sys.path.append('/home/r62/repos/russ_repos/Functions/')
 from TF_FUNCTIONS import df_to_LSTM, load_model
 
 # Importing Datasets:
-
+DIAGNOSE = True
 WINDOW_SIZE = 457
 M = 300 # Monte Carlo simulation # of iterations
+number_of_locations = 23
 
-input_data = read_pickle('/mnt/locutus/remotesensing/r62/river_ice_breakup/final_inputs/DAYMET_25_LOCATIONS_PRE_LSTM.pkl')
+input_data = pd.read_pickle(f'/mnt/locutus/remotesensing/r62/river_ice_breakup/final_Daymet_datasets/DAYMET_{number_of_locations}_LOCATIONS_PRE_LSTM.pkl')
 # print(input_data.keys())
 
 # importing training data
@@ -44,11 +45,11 @@ test_dates = input_data['test_dates']
 # test_X = df_to_LSTM(test_df, window_size=WINDOW_SIZE)
 
 # importing model
-model = load_model('/mnt/locutus/remotesensing/r62/river_ice_breakup/Results/LOCATIONS_25/Models/DAYMET/DAYMET_BAYESIAN')
+model = load_model('/mnt/locutus/remotesensing/r62/river_ice_breakup/Results/DAYMET_Results/Models/DAYMET/DAYMET_BAYESIAN')
 
 ## We must aggregate over the locations
-### First the test dataset
 
+### First the test dataset
 test_df['location'] = test_locations
 column_names = list(test_df.columns)
 column_names.pop(-1)
@@ -140,15 +141,11 @@ start = time.time()
 
 # print('COMPUTING SHAPLEY SCORES', flush = True) # turn on after diagnostics
 
-if rank == 6:
-	print('SHAPE OF TRAIN DF:',
-		  train_df_avg.shape,
-		  'SHAPE OF TEST DF:',
-		  test_df_avg.shape,
-		  'SHAPE OF test_X:',
-		  test_X.shape,
-		  'COLUMNS IN TRAIN DF:', 
-		  train_df_avg.columns) # turn on after diagnostics
+if (rank == 6) and DIAGNOSE:
+    print('SHAPE OF TRAIN DF:', train_df_avg.shape, flush = True)
+    print('SHAPE OF TEST DF:', test_df_avg.shape, flush = True)
+    print('SHAPE OF test_X:', test_X.shape, flush = True)
+    print('COLUMNS IN TRAIN DF:', train_df_avg.columns, flush = True) # turn on after diagnostics
 
 
 shapley_scores = []
@@ -165,7 +162,7 @@ for j in range(n_features):
 	for sample_idx in range(test_df_avg.shape[0]):
 		
 		x_date = test_dates[sample_idx]
-		candidates 
+		# candidates 
 		x = test_X[sample_idx]
 		x_plus_j_list = []
 		x_minus_j_list = []

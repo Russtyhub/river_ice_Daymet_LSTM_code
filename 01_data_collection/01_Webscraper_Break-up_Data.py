@@ -9,14 +9,16 @@
 # NOTE: there are some additional manual edits at the end of the code
 # for errors in the import that I had caught
 
-
 import os
+import sys
+
+sys.path.append('../')
+from resources import write_pickle
+
 import pandas as pd
-import numpy as np
 from selenium import webdriver
 #from selenium.webdriver.chrome.service import Service
 from bs4 import BeautifulSoup
-from datetime import datetime
 import time
 
 import warnings
@@ -24,9 +26,17 @@ warnings.filterwarnings("ignore", category=DeprecationWarning)
 
 start_time = time.time()
 
-path_to_breakup_data = input('Enter the absolute path to where you want your data imported to:')
-if path_to_breakup_data.endswith('/'):
-	path_to_breakup_data = path_to_breakup_data[:-1]
+path_to_parent_directory = input('Enter the absolute path to where you want your data imported to:')
+if path_to_parent_directory.endswith('/'):
+	path_to_parent_directory = path_to_parent_directory[:-1]
+
+directories = {}
+directories['path_to_parent_directory'] = path_to_parent_directory
+
+path_to_breakup_data = os.path.join(path_to_parent_directory, 'Breakup_Data')
+directories['path_to_breakup_data'] = path_to_breakup_data
+
+write_pickle("../.directories.pkl", directories)
 
 holding_dir = f'{path_to_breakup_data}/holding_APRFC'
 
@@ -90,30 +100,6 @@ os.chdir(holding_dir)
 df_list = [pd.read_pickle(i) for i in os.listdir()]
 final = pd.concat(df_list)
 
-#dates = []
-#unformatted_idx = []
-
-#for idx, i in enumerate(final['Breakup Date']):
- #   try:
-  #      date_object = datetime.strptime(str(i), '%Y-%m-%d').date()
-   #     dates.append(date_object)
-    #except:
-     #   unformatted_idx.append(idx)
-		
-#final.reset_index(drop=True, inplace=True)
-#final = final.drop(unformatted_idx)
-#final['Breakup Date'] = np.array(dates, dtype='datetime64')
-
-#days_after_equinox = []
-#for d in final['Breakup Date']:
- #   year = d.year
- #   d = d.date()
- #   v_equinox = datetime.strptime('{year}-03-21'.format(year=year), '%Y-%m-%d').date()
- #   diff = d - v_equinox
- #   days_after_equinox.append(int(diff.days))
-
-#final['Days from Equinox'] = np.array(days_after_equinox)
-
 final['Year'] = final['Year'].astype('int64')
 #final = final[final.Year > 1895]
 final.sort_values(by=['Year'], inplace = True)
@@ -123,7 +109,7 @@ final.to_csv(f'{path_to_breakup_data}/01_BREAK_UP_DATA_WEBSCRAPED.csv')
 
 # Processing the APRFC Data Records
 
-break_up_data = pd.read_csv('/mnt/locutus/remotesensing/r62/river_ice_breakup/Breakup_Data/01_BREAK_UP_DATA_WEBSCRAPED.csv').iloc[:, 1:]
+break_up_data = pd.read_csv(f'{path_to_breakup_data}/01_BREAK_UP_DATA_WEBSCRAPED.csv').iloc[:, 1:]
 
 # Removing features that I will not be using
 break_up_data.drop(['Ice Moved', 'First Boat', 'Un-safe Person', 'Unsafe Vehicle', 'Last Ice', 'Remarks'], axis = 1, inplace=True)
@@ -134,12 +120,11 @@ print('There are:', len(break_up_data[break_up_data['Breakup Date'].isna()]), 'd
 
 nan_indices = break_up_data.isna().sum(axis=1).astype('bool')
 
-break_up_data = pd.read_csv('/mnt/locutus/remotesensing/r62/river_ice_breakup/Breakup_Data/01_BREAK_UP_DATA_WEBSCRAPED.csv').iloc[:, 1:]
-break_up_data.drop(['Ice Moved', 'First Boat', 'Un-safe Person', 'Unsafe Vehicle', 'Last Ice', 'Remarks'], axis = 1, inplace=True)
-break_up_data.dropna(inplace=True)
-
 print(break_up_data.loc[nan_indices])
 
+# Editted these Sites as the 
+# Breakup Date formats were incorrect (492) or uninterpretable
+# (5014)
 break_up_data.at[492, 'Breakup Date'] = '1933-05-05'
 break_up_data.drop([5014], axis = 0, inplace=True)
 
@@ -149,15 +134,6 @@ break_up_data['Breakup Date'] = pd.to_datetime(break_up_data['Breakup Date'], fo
 print()
 print('MISSING DATA:', break_up_data.isna().sum())
 print(break_up_data.dtypes)
-
-# I caught these errors in the APRFC database
-break_up_data.loc[(break_up_data.Site == 'Fairbanks Chena River') & (break_up_data.Year == 1959), 'Breakup Date'] = pd.to_datetime('1959-05-01')
-break_up_data.loc[(break_up_data.Site == 'Emmonak Yukon River') & (break_up_data.Year == 2024), 'Breakup Date'] = pd.to_datetime('2024-05-24')
-break_up_data.loc[(break_up_data.Site == 'Aniak Kuskokwim River') & (break_up_data.Year == 2023), 'Breakup Date'] = pd.to_datetime('2023-05-15')
-break_up_data.loc[(break_up_data.Site == 'Beaver Yukon River') & (break_up_data.Year == 2023), 'Breakup Date'] = pd.to_datetime('2023-05-15')
-break_up_data.loc[(break_up_data.Site == 'Alakanuk Yukon River') & (break_up_data.Year == 2024), 'Breakup Date'] = pd.to_datetime('2024-05-24')
-break_up_data.loc[(break_up_data.Site == 'Fairbanks D-S of Chena R Tanana River') & (break_up_data.Year == 2024), 'Breakup Date'] = pd.to_datetime('2024-04-30')
-break_up_data.loc[(break_up_data.Site == 'Colville Village Colville River') & (break_up_data.Year == 2024), 'Breakup Date'] = pd.to_datetime('2024-06-08')
 
 break_up_data.to_pickle(f'{path_to_breakup_data}/01_PROCESSED_BREAK_UP_DATA_WEBSCRAPED.pkl')
 
